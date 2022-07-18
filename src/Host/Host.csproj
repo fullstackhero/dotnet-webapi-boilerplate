@@ -5,7 +5,6 @@
         <AssemblyName>FSH.WebApi.Host</AssemblyName>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="FluentValidation.AspNetCore" Version="10.4.0" />
         <PackageReference Include="Hangfire.Console.Extensions.Serilog" Version="1.0.2" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.5">
             <PrivateAssets>all</PrivateAssets>
@@ -42,8 +41,5 @@
         <None Include="Email Templates\*.cshtml">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-    </ItemGroup>
-    <ItemGroup>
-      <Folder Include="Databases\Host\" />
     </ItemGroup>
 </Project>

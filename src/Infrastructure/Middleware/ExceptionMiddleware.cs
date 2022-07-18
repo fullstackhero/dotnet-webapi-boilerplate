@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Localization;
 using Serilog;
 using Serilog.Context;
+using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace FSH.WebApi.Infrastructure.Middleware;
 
@@ -32,6 +35,19 @@ internal class ExceptionMiddleware : IMiddleware
         }
         catch (Exception exception)
         {
+            var response = context.Response;
+
+            if (exception is ValidationException ex && !response.HasStarted)
+            {
+                // short-cut for validation exceptions
+                response.ContentType = "application/json";
+                response.StatusCode = 400;
+                var problemDetails = new ValidationProblemDetails(
+                    ex.Errors.GroupBy(e => e.PropertyName).ToDictionary(e => e.Key, e => e.Select(e => e.ErrorMessage).ToArray()));
+                await response.WriteAsync(JsonSerializer.Serialize(problemDetails));
+                return;
+            }
+
             string email = _currentUser.GetUserEmail() is string userEmail ? userEmail : "Anonymous";
             var userId = _currentUser.GetUserId();
             string tenant = _currentUser.GetTenant() ?? string.Empty;
@@ -77,8 +93,7 @@ internal class ExceptionMiddleware : IMiddleware
                     break;
             }
 
-            Log.Error($"{errorResult.Exception} Request failed with Status Code {context.Response.StatusCode} and Error Id {errorId}.");
-            var response = context.Response;
+            Log.Error($"{errorResult.Exception} Request failed with Status Code {response.StatusCode} and Error Id {errorId}.");
             if (!response.HasStarted)
             {
                 response.ContentType = "application/json";
